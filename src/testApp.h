@@ -5,15 +5,14 @@
 #include "ofxXmlSettings.h"
 
 
-#define WIDTH 800
-#define HEIGHT 600
+#define WIDTH 640
+#define HEIGHT 480
 #define FPS 30
 #define PORT 22222
 
 class testApp : public ofBaseApp{
 	
 	public:
-		
 		void setup();
 		void update();
 		void draw();
@@ -28,7 +27,9 @@ class testApp : public ofBaseApp{
 		void windowResized(int w, int h);
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
-    void saveSettings();
+    
+        void saveSettings();
+    int setSource(int index);
 		
 		ofVideoGrabber    vidGrabber;
 		unsigned char *   videoBuf;
@@ -43,7 +44,9 @@ class testApp : public ofBaseApp{
 		float minBrightness;
 		float maxBrightness;
 		int flipHorizontal;
-         int fullscreen;
+        int fullscreen;
+    int numdevices;
+    int current_device_index;
 		unsigned char alpha;
         ofxXmlSettings settings;
 };  

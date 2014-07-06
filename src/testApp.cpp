@@ -18,7 +18,9 @@ void testApp::setup(){
 
 	vector<ofVideoDevice> devices = vidGrabber.listDevices();
 	int cameraindex = 0;
-
+    
+    numdevices = devices.size();
+    
     for(unsigned i = 0; i < devices.size(); i++){
 		cout << devices[i].id << ": " << devices[i].deviceName << endl;
 		if( !ofIsStringInString(devices[i].deviceName, "Built-in") ) {
@@ -30,13 +32,13 @@ void testApp::setup(){
             cout << " - unavailable " << endl; 
         }
 	}
-
-	vidGrabber.setDeviceID(cameraindex);
+    current_device_index = cameraindex;
+	vidGrabber.setDeviceID(current_device_index);
 	vidGrabber.setDesiredFrameRate(fps);
 	vidGrabber.initGrabber(camWidth, camHeight);
 	
 	videoBuf = new unsigned char[camWidth*camHeight*3];
-	videoTexture.allocate(camWidth,camHeight, GL_RGB);	
+	// videoTexture.allocate(camWidth,camHeight, GL_RGB);
 	ofSetFrameRate(fps);
     ofSetVerticalSync(true);
     ofSetEscapeQuitsApp(false);
@@ -44,7 +46,7 @@ void testApp::setup(){
 	cout << "listening for osc messages on port " << PORT << endl;
 	receiver.setup(PORT);	
 
-	totalPixels = camWidth*camHeight*3;
+	// totalPixels = camWidth*camHeight*3;
     
     // read settings
     if( ofFile::doesFileExist("settings.xml") ) {
@@ -81,23 +83,6 @@ void testApp::update(){
 			alpha = brightness * 255;
 		}	
 	}
-	
-	/*
-	if (vidGrabber.isFrameNew()){
-		textRef = vidGrabber.getTextureReference();
-	} 
-	*/
-	/*
-	if (vidGrabber.isFrameNew()){
-		unsigned char * pixels = vidGrabber.getPixels();
-		unsigned v;
-		for (int i = 0; i < totalPixels; i++){
-			videoBuf[i] = brightness * pixels[i];
-		}
-		videoTexture.loadData(videoBuf, camWidth,camHeight, GL_RGB);
-	}
-	*/
-
 }
 
 //--------------------------------------------------------------
@@ -119,8 +104,23 @@ void testApp::draw(){
             vidGrabber.draw(-x, 0, w, h1);
         glPopMatrix();
 	}
-	
-	//videoTexture.draw(0, 0);
+}
+
+int testApp::setSource(int index) {
+    vector<ofVideoDevice> devices = vidGrabber.listDevices();
+    cout << "Number of devices: " << devices.size() << endl;
+    if( index > (devices.size() - 1)) {
+        index = 0;
+    }
+    current_device_index = index;
+    if( devices[index].bAvailable ) {
+        cout << "setting device to: " << index << endl;
+        vidGrabber.setDeviceID(index);
+        vidGrabber.initGrabber(camWidth, camHeight);
+        return 1;
+    }
+    cout << "could not set device: " << index << endl;
+    return 0;
 }
 
 
@@ -138,12 +138,19 @@ void testApp::keyPressed(int key){
     // For Xcode 4.4 and greater, see this forum post on instructions on installing the SDK
     // http://forum.openframeworks.cc/index.php?topic=10343        
 	if (key == 's' || key == 'S'){ vidGrabber.videoSettings(); }
-	if (key == 'f') {
+    if (key == 'h') { flipHorizontal = 1 - flipHorizontal; }
+    // full screen
+    if (key == OF_KEY_F11 || key == 'f') {
         fullscreen = 1 - fullscreen;
         ofToggleFullscreen();
     }
-	if (key == 'h') { flipHorizontal = 1 - flipHorizontal; }
-	
+    // this is not working
+    /*
+    if (key == 'n') {
+        cout << "trying to set device to next" << endl;
+        this->setSource(current_device_index+1);
+    }
+    */
 }
 
 void testApp::exit() {
@@ -157,7 +164,6 @@ void testApp::saveSettings() {
     settings.setValue("maxBrightness", int(maxBrightness * 1000));
     settings.saveFile("settings.xml");
 }
-
 
 //--------------------------------------------------------------
 void testApp::keyReleased(int key){ 
